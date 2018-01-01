@@ -10,7 +10,7 @@ class TableEdit extends React.Component {
 
   constructor(props) {
     super(props);
-    let {columns = [], operations = {}} = props;
+    let {columns = [], operations = {}, selectedRowKeys} = props;
     const {saveEdit, del} = operations;
     del && (this.customDel = del);
     if (saveEdit) {
@@ -58,8 +58,19 @@ class TableEdit extends React.Component {
         },
       });
     }
-
+    let rowSelection;
+    if (selectedRowKeys) {
+      rowSelection = {
+        selectedRowKeys,
+        onChange: (keys) => {
+          selectedRowKeys.length = 0;
+          selectedRowKeys.push(...keys);
+          this.setState({selectedRowKeys});
+        },
+      };
+    }
     this.state = {
+      rowSelection,
       ...{dataSource: [], deleteFlag: false}, ...this.props,
       columns,
     };

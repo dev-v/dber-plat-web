@@ -19,7 +19,8 @@ export default {
   },
   reducers: {
     refresh(props, {index}) {
-      return {...props, index};
+      props.index = {...props.index, ...index};
+      return {...props};
     },
     addCategory(props) {
       props.index = {...props.index, ...{datas: [{}, ...props.index.datas]}};

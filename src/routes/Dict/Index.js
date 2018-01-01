@@ -71,17 +71,6 @@ class Dict extends Component {
     );
   };
 
-  rowSelection(selectedRowKeys) {
-    return {
-      selectedRowKeys,
-      onChange: (keys) => {
-        selectedRowKeys.length = 0;
-        selectedRowKeys.push(...keys);
-        this.setState({selectedRowKeys});
-      },
-    };
-  };
-
   render() {
     const {selectedKeys, datas} = this.props;
 
@@ -110,11 +99,8 @@ class Dict extends Component {
           </Col>
         </Row>
         <EditCategory/>
-        {/*  <Table rowKey={'id'} rowSelection={this.rowSelection(selectedKeys)}
-               columns={categoryColumns}
-               expandRowRender={this.expandedRowRender} pagination={pagination}
-               dataSource={datas}/>*/}
-        <TableEdit rowKey={'id'} rowSelection={this.rowSelection(selectedKeys)}
+        <TableEdit rowKey={'id'}
+                   selectedRowKeys={selectedKeys}
                    columns={categoryColumns}
                    operations={{
                      saveEdit(record) {
