@@ -1,8 +1,8 @@
 import {Layout, Menu} from 'antd';
 import React from 'react';
 import menus from './menu';
-import SideMenu from '../components/SideMenu';
-import ContentSwitch from '../routes/ContentSwitch';
+import SideMenu from './SideMenu';
+import ContentSwitch from './ContentSwitch';
 
 const {Header, Content, Footer} = Layout;
 
@@ -17,14 +17,6 @@ class IndexPage extends React.Component {
           }}/>
           <Layout>
             <Header>
-              <Menu
-                theme="dark"
-                mode="horizontal"
-                defaultSelectedKeys={['2']}
-                style={{lineHeight: '64px'}}
-              >
-                <Menu.Item key="3">nav 3</Menu.Item>
-              </Menu>
             </Header>
             <Content style={{background: '#fff', padding: '16px'}}>
               <ContentSwitch menuClick={menuClick}/>

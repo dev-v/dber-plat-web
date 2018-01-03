@@ -3,7 +3,7 @@ import React from 'react';
 
 export default class InputEdit extends React.Component {
   state = {
-    value: '',
+    value:undefined
   };
 
   constructor(props) {

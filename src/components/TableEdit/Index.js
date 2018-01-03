@@ -1,12 +1,26 @@
-import {Table, Input, message} from 'antd';
-import InputEdit from './InputEdit';
+import {Table, Input, message, Popconfirm} from 'antd';
+import CellInput from './CellInput';
 
 const msg = '同时只能编辑一行数据！';
 const _idKey = '_dber_key_';
 let i = 0;
 
 class TableEdit extends React.Component {
-  rowKey;
+
+  getColumnRender = (column) => {
+    if (column.children) {
+      column.children = column.children.map((child) => {
+        return this.getColumnRender(child);
+      });
+      return column;
+    } else {
+      return {
+        ...column,
+        render: (text, record) => this.renderColumns(text,
+          record, column.dataIndex || column.key),
+      };
+    }
+  };
 
   constructor(props) {
     super(props);
@@ -19,11 +33,7 @@ class TableEdit extends React.Component {
         if (column.editable == false) {
           return column;
         }
-        return {
-          ...column,
-          render: (text, record) => this.renderColumns(text,
-            record, column.dataIndex || column.key),
-        };
+        return this.getColumnRender(column);
       });
     }
     const operationKeys = Object.keys(operations);
@@ -43,14 +53,18 @@ class TableEdit extends React.Component {
                       {
                         operationKeys.map((key) => {
                           if (key != 'saveEdit' && key != 'del') {
-                            return <a onClick={() => {
+                            return <a key={key} onClick={() => {
                               operations[key](record);
-                            }}>key</a>;
+                            }}>{key}</a>;
                           }
                         })
                       }
                     {saveEdit && <a onClick={() => this.edit(record)}>编辑</a>}
-                    {del && <a onClick={() => this.del(record)}>删除</a>}
+                    {del && <Popconfirm title="确定删除这条数据?"
+                                        onConfirm={() => this.del(record)}
+                                        okText="确定" cancelText="取消">
+                      <a href="#">删除</a>
+                    </Popconfirm>}
                     </span>
               }
             </div>
@@ -74,7 +88,6 @@ class TableEdit extends React.Component {
       ...{dataSource: [], deleteFlag: false}, ...this.props,
       columns,
     };
-    this.rowKey = this.state.rowKey;
   }
 
   filterTarget(record) {
@@ -88,7 +101,7 @@ class TableEdit extends React.Component {
     return (
       <div>
         {record.editable
-          ? <InputEdit value={text} onChange={(val) => {
+          ? <CellInput value={text} onChange={(val) => {
             record[column] = val;
           }}/>
           : text
@@ -98,7 +111,6 @@ class TableEdit extends React.Component {
   }
 
   complete(record) {
-    this.editRecord = null;
     const target = this.filterTarget(record);
     if (target) {
       delete target.editable;
@@ -106,13 +118,10 @@ class TableEdit extends React.Component {
     return target;
   }
 
-  editRecord;
-
   edit(record) {
     if (this.editRecord && this.editRecord != record) {
       message.warn(msg);
     } else {
-      this.editRecord = record;
       const target = this.filterTarget(record);
       if (target) {
         target.editable = true;
@@ -124,8 +133,8 @@ class TableEdit extends React.Component {
   save(record) {
     const target = this.complete(record);
     if (target) {
-      if (target[this.rowKey].toString().startsWith(_idKey)) {
-        delete target[this.rowKey];
+      if (target[this.state.rowKey].toString().startsWith(_idKey)) {
+        delete target[this.state.rowKey];
       }
       this.saveEdit && this.saveEdit(record);
       this.setState({...this.state});
@@ -135,8 +144,13 @@ class TableEdit extends React.Component {
   cancel(record) {
     const target = this.complete(record);
     if (target) {
-      Object.assign(target, this.cacheData.filter(
-        item => record[this.rowKey] === item[this.rowKey])[0]);
+      if (this.cacheEditRecord[this.state.rowKey] ==
+        target[this.state.rowKey]) {
+        for (let key in target) {
+          delete target[key];
+        }
+        Object.assign(target, this.cacheEditRecord);
+      }
       delete target.editable;
       this.setState({...this.state});
     }
@@ -147,14 +161,16 @@ class TableEdit extends React.Component {
       return record != item;
     });
     this.delRecord = record;
-    this.customDel && (this.customDel(record));
+    if (!record[this.state.rowKey].toString().startsWith(_idKey)) {
+      this.customDel && (this.customDel(record));
+    }
     this.state.deleteFlag = true;
     this.setState({...this.state, ...{dataSource: newData}});
   }
 
   render() {
-    let flag = false;
-    this.cacheData = [];
+    let editRecord, flag = false;
+    this.editRecord = null;
     if (!this.state.deleteFlag) {
       this.state.dataSource = (this.props.dataSource ||
         this.state.dataSource).map(item => {
@@ -163,16 +179,19 @@ class TableEdit extends React.Component {
             delete item.editable;
             message.warn(msg);
           } else {
-            this.editRecord = item;
+            editRecord = item;
             flag = true;
           }
         }
-        if (!item[this.rowKey]) {
-          item[this.rowKey] = _idKey + i++;
+        if (!item[this.state.rowKey]) {
+          item[this.state.rowKey] = _idKey + i++;
         }
-        this.cacheData.push({...item});
         return item;
       });
+    }
+    if (flag) {
+      this.editRecord = editRecord;
+      this.cacheEditRecord = {...editRecord};
     }
     this.state.deleteFlag = false;
     return <Table {...this.state}/>;

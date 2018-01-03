@@ -1,22 +1,28 @@
 import {query} from '../services/fitnessService';
+import {platGet as get, platPost as post} from '../utils/request';
+
+const rootPath = 'fitness_service';
 
 export default {
   namespace: 'fitness',
   state: {
-    selectedKeys: [],
-    currentPage: 1,
-    total: 0,
     datas: [],
+    total: 0,
+    currentPage: 1,
   },
-  reducers: {
-    refresh(props, {payload}) {
-      return {...props, ...payload};
-    },
-  },
+  reducers: {},
   effects: {
     * query({page}, {call, put}) {
-      const {data} = yield call(query, page);
-      yield put({type: 'refresh', payload: data.response});
+      return (yield call(post, `${rootPath}/query/${page}`)).response;
+    },
+    * del({id}, {call}) {
+      return (yield call(get, `${rootPath}/del/${id}`)).response;
+    },
+    * save({data}, {call}) {
+      return (yield call(post, `${rootPath}/save`, data)).response;
+    },
+    * get({id}, {call}) {
+      return (yield call(get, `${rootPath}/get/${id}`)).response;
     },
   },
 };

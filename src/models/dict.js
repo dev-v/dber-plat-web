@@ -1,54 +1,46 @@
-import {
-  queryCategory,
-  queryByCategoryId,
-  addCategory,
-} from '../services/dictService';
+import {platPost as post, platGet as get} from '../utils/request';
+
+const rootPath = 'dict_category';
+const rootDictPath = 'dict';
 
 export default {
   namespace: 'dict',
   state: {
-    index: {
-      selectedKeys: [],
-      currentPage: 1,
-      total: 0,
-      datas: [],
-    },
-    editCategory: {
-      data: {},
-    },
+    currentPage: 1,
+    total: 0,
+    datas: [],
   },
   reducers: {
-    refresh(props, {index}) {
-      props.index = {...props.index, ...index};
-      return {...props};
-    },
-    addCategory(props) {
-      props.index = {...props.index, ...{datas: [{}, ...props.index.datas]}};
-      return {...props};
-    },
-    editCategory(props, {data = {}}) {
-      props.editCategory = {
-        visible: true, data,
+    refresh(props, {payload}) {
+      return {
+        ...props,
+        ...payload,
       };
-      return {...props};
-    },
-    cancelCategory(props) {
-      props.editCategory = {visible: false};
-      return {...props};
     },
   },
   effects: {
-    * saveCategory({category}, {call, put}) {
-      yield call(addCategory, category);
-      yield put({type: 'queryCategory'});
+    // 字典类型
+    * saveCategory({category}, {call}) {
+      yield call(post, `${rootPath}/save`, category);
     },
     * queryCategory({page}, {call, put}) {
-      const {data} = yield call(queryCategory, page);
-      yield put({type: 'refresh', index: data.response});
+      const data = yield call(post, `${rootPath}/query/${page}`);
+      yield put({type: 'refresh', payload: data.response});
     },
-    * queryDicts({categoryId}, {call}) {
-      const {data} = yield call(queryByCategoryId, categoryId);
-      console.log(data);
+    * delCategory({id}, {call}) {
+      yield call(get, `${rootPath}/del/${id}`);
+    },
+
+    // 字典数据
+    * saveDict({dict}, {call}) {
+      return (yield call(post, `${rootDictPath}/save`, dict)).response;
+    },
+    * queryDict({categoryId}, {call}) {
+      return (yield call(post, `${rootDictPath}/query/`,
+        {categoryId})).response;
+    },
+    * delDict({id}, {call}) {
+      return (yield call(get, `${rootDictPath}/del/${id}`)).response;
     },
   },
 };

@@ -74,7 +74,6 @@ export default class SideMenu extends PureComponent {
     return (<Sider collapsible>
       <div className="logo" />
       <Menu
-        theme="dark"
         defaultSelectedKeys={this.defaultSelectedKeys} mode="inline"
         defaultOpenKeys={this.defaultSelectedParent}
         onSelect={this.onSelect}>
