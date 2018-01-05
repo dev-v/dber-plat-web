@@ -1,25 +1,27 @@
-import {Input} from 'antd';
-import React from 'react';
 
-export default class InputEdit extends React.Component {
+import {Input} from 'antd';
+import {PureComponent} from 'react';
+
+export default class InputEdit extends PureComponent {
+  static format = (text) => text;
+
   state = {
-    value:undefined
+    value: undefined,
   };
 
   constructor(props) {
     super(props);
-    const {value = '', onChange = () => {}} = props;
-    this.state.value = value;
-    this.onChange = onChange;
+    Object.assign(this.state, props);
   }
 
   setValue(value) {
     this.setState({value});
-    this.onChange(value);
+    this.state.onChange(value);
   }
 
   render() {
-    return (<Input {...this.props} value={this.state.value} onChange={(e) => {
+    delete this.state.categoryId;
+    return (<Input {...this.state} onChange={(e) => {
       this.setValue(e.target.value);
     }}/>);
   }

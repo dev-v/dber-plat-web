@@ -1,58 +1,105 @@
 import {PureComponent} from 'react';
-import {Button, Row, Col} from 'antd';
 import TableEdit from '../TableEdit/Index';
+import ToolBar from './ToolBar';
 
+//除TableEdit.Index支持的属性以外，扩展的配置属性
+const _default = {
+  query: undefined,// ({toolbar: false, operate: (page, data) => {}} ||((page, data) => {})),返回promise
+  edit: undefined,// ({toolbar: false, operate: (record) => {}} || ((record) => {})), 返回promise
+  del: undefined,//((page, data) => {}) 返回promize
+};
 export default class RowContent extends PureComponent {
-  constructor(props) {
-    super(props);
-    const {
-      rowKey = 'id',
-      columns = {}, operations = {
-        save, del, query, get,
-      }, addModel = {editable: true},
-    } = props;
-    const {save, del, query, get} = operations;
-    if (!query) {
-      throw new Error('必须提供operations.query(page,queryData)配置！');
-    }
+  toolbar = {left: [], right: []};
 
-    const _ops = {};
-
-    if (save) {
-      _ops.saveEdit = (record) => {
-        save(record).then((result) => {
-          if (result) {
-            this.query();
-          }
-        });
-      };
-    }
-
-    if (del) {
-      _ops.del = (record) => {
-        del(record).then((result) => {
-          if (result) {
-            this.query();
-          }
-        });
-      };
-    }
-
-    this._props = {
-      ...props,
-      columns,
-      operations: _ops,
-      addModel,
-      rowKey,
-      query,
-      get,
-    };
-  }
+  _props;
 
   state = {
     currentPage: 1,
     total: 0,
     datas: [],
+  };
+
+  _custom = {
+    query: undefined,
+    edit: undefined,
+  };
+
+  constructor(props) {
+    super(props);
+    this._props = {..._default, ...props};
+
+    const {
+      edit, query, del, addModel = {editable: true},
+    } = props;
+
+    this._props.addModel = addModel;
+
+    this.parseQuery(query);
+    this.parseEdit(edit);
+
+    if (del) {
+      this._props.del = (record) => {
+        return del(record).then((result) => {
+          if (result) {
+            this.query();
+          }
+        });
+      };
+    }
+  }
+
+  parseQuery = (query) => {
+    if (query) {
+      delete this._props.query;
+
+      let barFlag = true;
+      if (typeof query == 'function') {
+        this._custom.query = query;
+      } else {
+        barFlag = query.toolbar;
+        this._custom.query = query.operate;
+      }
+
+      if (barFlag) {
+        this.toolbar.right.push({
+          text: '查询',
+          onClick: () => {
+            this.query(1);
+          },
+        });
+      }
+
+      this._props.onPage = (page) => {
+        this.query(page);
+      };
+    }
+  };
+
+  parseEdit = (edit) => {
+    if (edit) {
+      let barFlag = true;
+      if (typeof edit == 'function') {
+        this._custom.edit = edit;
+      } else {
+        barFlag = edit.toolbar;
+        this._custom.edit = edit.operate;
+      }
+
+      if (barFlag) {
+        this.toolbar.left.push({
+          text: '添加',
+          onClick: this.add,
+        });
+      }
+
+      this._props.edit = (record) => {
+        this._custom.edit(record).then((result) => {
+          if (result) {
+            this.query();
+          }
+        });
+      };
+    }
   };
 
   componentWillMount() {
@@ -69,42 +116,27 @@ export default class RowContent extends PureComponent {
     });
   };
 
-  query(page, data) {
-    this._props.query(page || this.state.currentPage, data).
-      then((data) => {
-        if (data) {
-          this.setState({...data});
-        }
-      });
-  }
+  query = (page, data) => {
+    if (this._custom.query) {
+      this._custom.query(page || this.state.currentPage, data).
+        then((data) => {
+          if (data) {
+            this.setState({...data});
+          }
+        });
+    }
+  };
 
   render() {
+    if (this.props.datas) {
+      this.state.datas = this.props.datas;
+    }
     return (
       <div>
-        <Row style={{paddingBottom: '2px'}}>
-          <Col span={12}>
-            <Button type='primary' onClick={() => {
-              this.add();
-            }}>新增</Button>
-          </Col>
-          <Col span={12}>
-            <div style={{textAlign: 'right'}}>
-              <Button type='primary' onClick={() => {
-                this.query(1);
-              }}>查询</Button>
-            </div>
-          </Col>
-        </Row>
+        <ToolBar {...this.toolbar}/>
         <TableEdit
-          pagination={{
-            currentPage: this.state.currentPage,
-            total: this.state.total,
-            onChange: (page) => {
-              this.query(page);
-            },
-          }}
-          dataSource={this.state.datas}
           {...this._props}
+          {...this.state}
         />
       </div>);
   };

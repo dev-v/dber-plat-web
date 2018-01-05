@@ -12,7 +12,6 @@ function checkStatus(response) {
   if (response.status >= 200 && response.status < 300) {
     return response.json();
   }
-
   const error = new Error('请求错误！');
   error.response = response;
   throw error;
@@ -45,21 +44,43 @@ export default function request(url, options) {
   progress.inc();
   return fetch(url, options).
     then(checkStatus).
-    then(checkSystemStatus).
-    then(data => data).finally(() => {
+    then(checkSystemStatus).finally(() => {
       progress.done();
     });
 }
 
 export function plat(url, options) {
-  return request('http://localhost/' + url, options);
+  return request('http://localhost:8080/' + url, options);
 }
 
 export function platPost(url, data) {
+  let body = '';
+
+  if (typeof data == 'object') {
+    let val;
+    if (Array.isArray(data)) {
+      body = JSON.stringify(data);
+    } else {
+      Object.keys(data).map((key) => {
+        val = data[key];
+        body += `&${key}=${(typeof val == 'object')
+          ? JSON.stringify(val)
+          : val}`;
+      });
+      body = body.substring(1);
+    }
+  } else {
+    body = data;
+  }
+
   return plat(url, {
     method: 'POST',
-    body: JSON.stringify(data),
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body,
   });
+
 }
 
 export function platGet(url) {

@@ -1,11 +1,123 @@
 import {Table, Input, message, Popconfirm} from 'antd';
-import CellInput from './CellInput';
+import CellType from './CellHelp';
+import {dictCache} from '../../utils/util';
 
 const msg = '同时只能编辑一行数据！';
 const _idKey = '_dber_key_';
 let i = 0;
 
-class TableEdit extends React.Component {
+function renderColumns(text, record, column) {
+  const Cell = column.editable || CellType.input;
+  return (
+    record.editable
+      ? <Cell size='small' categoryId={column.categoryId} value={text}
+              onChange={(val) => {
+                record[column.dataIndex || column.key] = val;
+              }}/>
+      : Cell.format(text, column)
+  );
+}
+
+//除antd.Table支持的属性以外，扩展的配置属性
+const _default = {
+  operations: [],
+  rowKey: 'id',
+  addModel: {editable: true},
+  del: undefined,// (record) => {},
+  edit: undefined,// (record) => {},
+  onPage: undefined,//(page)=>{}
+};
+
+export default class Index extends React.Component {
+  // 客户端操作
+  _custom = {
+    del: undefined,
+    edit: undefined,
+  };
+
+  // 客户端配置后便不再改变的属性
+  _props;
+
+  // 运行过程中改变的状态，配置时也可以给定
+  state = {deleteFlag: false, dataSource: []};
+
+  constructor(props) {
+    super(props);
+
+    this._props = {..._default, ...props};
+
+    let {columns, operations = [], selectedRowKeys, del, edit, pagination, onPage} = props;
+
+    // 可行内编辑
+    if (edit) {
+      delete this._props.edit;
+      this._custom.edit = edit;
+
+      operations.push({
+        text: '编辑',
+        onClick: this.edit,
+      });
+
+      columns = columns.map((column) => {
+        if (column.editable == false) {
+          return column;
+        }
+        return this.getColumnRender(column);
+      });
+    }
+
+    // 行内删除
+    if (del) {
+      delete this._props.del;
+      this._custom.del = del;
+
+      operations.push({
+        confirm: '确定删除这条数据？',
+        text: '删除',
+        onClick: (record) => {
+          this.del(record);
+        },
+      });
+    }
+
+    // 操作列
+    delete this._props.operations;
+    const operationColumn = this.getOperationColumn(operations);
+    operationColumn && columns.push(operationColumn);
+
+    this._props.columns = columns;
+
+    //可选择行内数据 选择后的数据绑定到配置的数组对象上
+    let rowSelection;
+    if (selectedRowKeys) {
+      delete this._props.selectedRowKeys;
+      this._props.rowSelection = {
+        selectedRowKeys,
+        onChange: (keys) => {
+          selectedRowKeys.length = 0;
+          selectedRowKeys.push(...keys);
+          this.setState({selectedRowKeys});
+        },
+      };
+    }
+
+    // 分页和数据源
+    delete this._props.dataSource;
+    delete this._props.datas;
+    delete this._props.pagination;
+
+    if (pagination != false) {
+      this.state.pagination = {
+        ...pagination,
+        onChange: onPage,
+        showTotal: (total, range) => `${range[0]}-${range[1]}/${total}`,
+      };
+    } else {
+      this.state.pagination = false;
+    }
+
+    this.copyPropsToState(props);
+  }
 
   getColumnRender = (column) => {
     if (column.children) {
@@ -14,31 +126,34 @@ class TableEdit extends React.Component {
       });
       return column;
     } else {
+      if (column.editable === CellType.dictSelect) {
+        const {categoryId} = column;
+        dictCache.getDict(categoryId, (dict, remote) => {
+          if (remote) {
+            this.setState({...this.state});
+          }
+        });
+      }
       return {
         ...column,
-        render: (text, record) => this.renderColumns(text,
-          record, column.dataIndex || column.key),
+        render: (text, record) => renderColumns(text,
+          record, column),
       };
     }
   };
 
-  constructor(props) {
-    super(props);
-    let {columns = [], operations = {}, selectedRowKeys} = props;
-    const {saveEdit, del} = operations;
-    del && (this.customDel = del);
-    if (saveEdit) {
-      this.saveEdit = saveEdit;
-      columns = columns.map((column) => {
-        if (column.editable == false) {
-          return column;
-        }
-        return this.getColumnRender(column);
-      });
+  copyPropsToState(props) {
+    const {total, currentPage, current, datas, dataSource} = props;
+    this.state.dataSource = datas || dataSource || this.state.dataSource;
+    if (this.state.pagination) {
+      Object.assign(this.state.pagination,
+        {total, current: currentPage || current});
     }
-    const operationKeys = Object.keys(operations);
-    if (operationKeys.length > 0) {
-      columns.push({
+  }
+
+  getOperationColumn = (operations) => {
+    if (operations.length > 0) {
+      return {
         title: '操作',
         dataIndex: 'operation',
         render: (text, record) => {
@@ -51,129 +166,85 @@ class TableEdit extends React.Component {
                 </span>
                   : <span className='operation'>
                       {
-                        operationKeys.map((key) => {
-                          if (key != 'saveEdit' && key != 'del') {
-                            return <a key={key} onClick={() => {
-                              operations[key](record);
-                            }}>{key}</a>;
-                          }
+                        operations.map((item) => {
+                          return (item.confirm ?
+                              <Popconfirm key={item.text} title={item.confirm}
+                                          onConfirm={() => item.onClick(
+                                            record)}
+                                          okText="确定"
+                                          cancelText="取消">
+                                <a href="#">{item.text}</a>
+                              </Popconfirm>
+                              : <a key={item.text} onClick={() => {
+                                item.onClick(record);
+                              }}>{item.text}</a>
+                          );
                         })
                       }
-                    {saveEdit && <a onClick={() => this.edit(record)}>编辑</a>}
-                    {del && <Popconfirm title="确定删除这条数据?"
-                                        onConfirm={() => this.del(record)}
-                                        okText="确定" cancelText="取消">
-                      <a href="#">删除</a>
-                    </Popconfirm>}
                     </span>
               }
             </div>
           );
         },
-      });
-    }
-    let rowSelection;
-    if (selectedRowKeys) {
-      rowSelection = {
-        selectedRowKeys,
-        onChange: (keys) => {
-          selectedRowKeys.length = 0;
-          selectedRowKeys.push(...keys);
-          this.setState({selectedRowKeys});
-        },
       };
     }
-    this.state = {
-      rowSelection,
-      ...{dataSource: [], deleteFlag: false}, ...this.props,
-      columns,
-    };
-  }
+  };
 
-  filterTarget(record) {
-    const target = this.state.dataSource.filter(item => {
-      return record == item;
-    })[0];
-    return target;
-  }
-
-  renderColumns(text, record, column) {
-    return (
-      <div>
-        {record.editable
-          ? <CellInput value={text} onChange={(val) => {
-            record[column] = val;
-          }}/>
-          : text
-        }
-      </div>
-    );
-  }
-
-  complete(record) {
-    const target = this.filterTarget(record);
-    if (target) {
-      delete target.editable;
-    }
-    return target;
-  }
-
-  edit(record) {
+  edit = (record) => {
     if (this.editRecord && this.editRecord != record) {
       message.warn(msg);
     } else {
-      const target = this.filterTarget(record);
-      if (target) {
-        target.editable = true;
-        this.setState({...this.state});
-      }
-    }
-  }
-
-  save(record) {
-    const target = this.complete(record);
-    if (target) {
-      if (target[this.state.rowKey].toString().startsWith(_idKey)) {
-        delete target[this.state.rowKey];
-      }
-      this.saveEdit && this.saveEdit(record);
+      record.editable = true;
       this.setState({...this.state});
     }
-  }
+  };
 
-  cancel(record) {
-    const target = this.complete(record);
-    if (target) {
-      if (this.cacheEditRecord[this.state.rowKey] ==
-        target[this.state.rowKey]) {
-        for (let key in target) {
-          delete target[key];
-        }
-        Object.assign(target, this.cacheEditRecord);
-      }
-      delete target.editable;
-      this.setState({...this.state});
+  save = (record) => {
+    delete record.editable;
+    if ((record[this._props.rowKey] || '').toString().startsWith(_idKey)) {
+      delete record[this._props.rowKey];
     }
-  }
+    this._custom.edit(record);
+    this.setState({...this.state});
+  };
 
-  del(record) {
+  cancel = (record) => {
+    delete record.editable;
+    for (let key in record) {
+      delete record[key];
+    }
+    Object.assign(record, this.cacheEditRecord);
+    this.setState({...this.state});
+  };
+
+  del = (record) => {
+    this.delRecord = record;
+    if (!record[this._props.rowKey].toString().startsWith(_idKey) &&
+      this._custom.del) {
+      this._custom.del(record).then(() => {
+        this.realDel(record);
+      });
+    } else {
+      this.realDel(record);
+    }
+  };
+
+  realDel = (record) => {
     const newData = this.state.dataSource.filter(item => {
       return record != item;
     });
-    this.delRecord = record;
-    if (!record[this.state.rowKey].toString().startsWith(_idKey)) {
-      this.customDel && (this.customDel(record));
-    }
     this.state.deleteFlag = true;
-    this.setState({...this.state, ...{dataSource: newData}});
-  }
+    this.state.dataSource.length = 0;
+    this.state.dataSource.push(...newData);
+    this.setState({...this.state});
+  };
 
   render() {
     let editRecord, flag = false;
     this.editRecord = null;
     if (!this.state.deleteFlag) {
-      this.state.dataSource = (this.props.dataSource ||
-        this.state.dataSource).map(item => {
+      this.copyPropsToState(this.props);
+      this.state.dataSource.map(item => {
         if (item.editable) {
           if (flag) {
             delete item.editable;
@@ -183,19 +254,22 @@ class TableEdit extends React.Component {
             flag = true;
           }
         }
-        if (!item[this.state.rowKey]) {
-          item[this.state.rowKey] = _idKey + i++;
+        if (!item[this._props.rowKey]) {
+          item[this._props.rowKey] = _idKey + i++;
         }
         return item;
       });
     }
+
     if (flag) {
       this.editRecord = editRecord;
       this.cacheEditRecord = {...editRecord};
+      delete this.cacheEditRecord.editable;
     }
+
     this.state.deleteFlag = false;
-    return <Table {...this.state}/>;
+
+    return <Table {...this._props} {...this.state}/>;
+
   }
 }
-
-export default TableEdit;

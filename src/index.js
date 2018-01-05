@@ -6,7 +6,7 @@ const app = dva();
 
 app.use({
   onError(e) {
-    message.error(e.message, 7);
+    message.error(e.message);
     console.log(e);
   },
 });

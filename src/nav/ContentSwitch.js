@@ -22,7 +22,7 @@ class ContentSwitch extends React.Component {
     const {component, items} = this.props;
     return (
       <div>
-        <Breadcrumb style={{paddingBottom: '20px'}}>
+        <Breadcrumb style={{paddingBottom: '16px'}}>
           {items.map((item) => {
             return <Breadcrumb.Item key={item.realPath || item.path}>
               {item.icon && <Icon type={item.icon}/>}

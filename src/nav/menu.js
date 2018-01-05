@@ -5,16 +5,16 @@ export default [
     icon: 'setting',
     children: [
       {
-        title: '数据字典',
-        selected: true,
-        path: 'dict',
-        models: () => [import('../models/dict' )],
-        component: () => import('../routes/Dict/Index'),
-      }, {
         title: '预约策略',
         path: 'booking',
         models: () => [import('../models/booking')],
         component: () => import('../routes/Booking'),
+      },
+      {
+        title: '数据字典',
+        path: 'dict',
+        models: () => [import('../models/dict' )],
+        component: () => import('../routes/Dict'),
       },],
   },
   {
@@ -25,6 +25,7 @@ export default [
       {
         title: '健身项目',
         path: 'fitness',
+        selected: true,
         models: () => [import('../models/fitness')],
         component: () => import('../routes/Fitness'),
       }, {
