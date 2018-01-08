@@ -55,7 +55,6 @@ export function plat(url, options) {
 
 export function platPost(url, data) {
   let body = '';
-
   if (typeof data == 'object') {
     let val;
     if (Array.isArray(data)) {
@@ -63,9 +62,12 @@ export function platPost(url, data) {
     } else {
       Object.keys(data).map((key) => {
         val = data[key];
-        body += `&${key}=${(typeof val == 'object')
-          ? JSON.stringify(val)
-          : val}`;
+
+        // body += `&${key}=${(typeof val == 'object')
+        //   ? JSON.stringify(val)
+        //   : val}`;
+
+        body += `&${key}=${val}`;
       });
       body = body.substring(1);
     }
