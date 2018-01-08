@@ -1,4 +1,4 @@
-import {platPost as post} from './request';
+import {platService} from './request';
 
 class DictCache {
   _cache = {};
@@ -7,7 +7,7 @@ class DictCache {
     if (dict) {
       fn && fn(dict);
     } else {
-      post('dict/query', {categoryId}).then((response) => {
+      platService.post('dict/query', {categoryId}).then((response) => {
         dict = this.setDict(categoryId, response.response);
         fn && fn(dict, true);
       });

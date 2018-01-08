@@ -1,4 +1,4 @@
-import {platGet as get, platPost as post} from '../utils/request';
+import {platService} from '../utils/request';
 
 /**
  * 使用实例
@@ -26,20 +26,24 @@ export default (namespace, serviceRootPath, methodNameSuffix = '') => {
     reducers: {},
     effects: {
       * [`query${methodNameSuffix}`]({page}, {call}) {
-        return (yield call(post, `${serviceRootPath}/query/${page}`)).response;
+        return (yield call(platService.post,
+          `${serviceRootPath}/query/${page}`)).response;
       },
       * [`queryWithoutPage${methodNameSuffix}`]({condition}, {call}) {
-        return (yield call(post, `${serviceRootPath}/query`,
+        return (yield call(platService.post, `${serviceRootPath}/query`,
           condition)).response;
       },
       * [`del${methodNameSuffix}`]({id}, {call}) {
-        return (yield call(get, `${serviceRootPath}/del/${id}`)).response;
+        return (yield call(platService.get,
+          `${serviceRootPath}/del/${id}`)).response;
       },
       * [`save${methodNameSuffix}`]({data}, {call}) {
-        return (yield call(post, `${serviceRootPath}/save`, data)).response;
+        return (yield call(platService.post, `${serviceRootPath}/save`,
+          data)).response;
       },
       * [`get${methodNameSuffix}`]({id}, {call}) {
-        return (yield call(get, `${serviceRootPath}/get/${id}`)).response;
+        return (yield call(platService.get,
+          `${serviceRootPath}/get/${id}`)).response;
       },
     },
   };

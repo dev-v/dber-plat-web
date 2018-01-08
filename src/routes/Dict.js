@@ -13,6 +13,10 @@ const categoryColumns = [
     editable: false,
   },
   {
+    title: '代码',
+    dataIndex: 'code',
+  },
+  {
     title: '字典类型',
     dataIndex: 'category',
   },
@@ -24,11 +28,7 @@ const categoryColumns = [
   {
     title: '描述',
     dataIndex: 'content',
-  },
-  {
-    title: '创建时间',
-    dataIndex: 'createTime',
-    editable: false,
+    width: '460px',
   },
   {
     title: '更新时间',

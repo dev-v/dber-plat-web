@@ -1,6 +1,6 @@
 export default [
   {
-    title: '配置管理',
+    title: '平台管理',
     path: 'config',
     icon: 'setting',
     children: [
@@ -15,11 +15,59 @@ export default [
         path: 'dict',
         models: () => [import('../models/dict' )],
         component: () => import('../routes/Dict'),
+      },
+      {
+        title: '健身项目',
+        path: 'fitness',
+        models: () => [import('../models/fitness')],
+        component: () => import('../routes/Fitness'),
+      },
+      {
+        title: '元素勋章',
+        path: 'elementMedal',
+        models: () => [import('../models/elementMedal')],
+        component: () => import('../routes/ElementMedal'),
+      },
+      {
+        title: '年卡策略设置',
+        path: 'vipCardStrategy',
+        models: () => [import('../models/vipCardStrategy')],
+        component: () => import('../routes/VipCardStrategy'),
+      },
+      {
+        title: '消息',
+        path: 'msg',
+        models: () => [import('../models/msg')],
+        component: () => import('../routes/Msg'),
+      },
+      {
+        title: '图片',
+        path: 'img',
+        models: () => [import('../models/img')],
+        component: () => import('../routes/Img'),
+      },
+      {
+        title: 'JOB',
+        path: 'job',
+        models: () => [import('../models/job')],
+        component: () => import('../routes/Job'),
+      },
+      {
+        title: 'JOB_INSTANCE',
+        path: 'jobInstance',
+        models: () => [import('../models/jobInstance')],
+        component: () => import('../routes/JobInstance'),
+      },
+      {
+        title: '平台账户',
+        path: 'account',
+        models: () => [import('../models/account')],
+        component: () => import('../routes/Account'),
       },],
   },
   {
-    title: '策略设置',
-    path: 'strategy',
+    title: '店铺管理',
+    path: 'shop',
     icon: 'profile',
     children: [
       {
@@ -28,10 +76,5 @@ export default [
         selected: true,
         models: () => [import('../models/fitness')],
         component: () => import('../routes/Fitness'),
-      }, {
-        title: '预约策略',
-        path: 'booking',
-        models: () => [import('../models/booking')],
-        component: () => import('../routes/Booking'),
       },],
   }];

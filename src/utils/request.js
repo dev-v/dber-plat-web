@@ -49,42 +49,58 @@ export default function request(url, options) {
     });
 }
 
-export function plat(url, options) {
-  return request('http://localhost:8080/' + url, options);
-}
+class WrapService {
+  baseUrl;
 
-export function platPost(url, data) {
-  let body = '';
-  if (typeof data == 'object') {
-    let val;
-    if (Array.isArray(data)) {
-      body = JSON.stringify(data);
-    } else {
-      Object.keys(data).map((key) => {
-        val = data[key];
-
-        // body += `&${key}=${(typeof val == 'object')
-        //   ? JSON.stringify(val)
-        //   : val}`;
-
-        body += `&${key}=${val}`;
-      });
-      body = body.substring(1);
-    }
-  } else {
-    body = data;
+  constructor(baseUrl) {
+    this.baseUrl = baseUrl;
   }
 
-  return plat(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body,
-  });
+  request = (path, options) => {
+    return request(`${this.baseUrl}${path}`, options);
+  };
 
+  get = (path) => {
+    return this.request(path);
+  };
+
+  post = (path, data) => {
+    let body = '';
+    if (typeof data == 'object') {
+      let val;
+      if (Array.isArray(data)) {
+        body = JSON.stringify(data);
+      } else {
+        Object.keys(data).map((key) => {
+          val = data[key];
+
+          // 空字符串舍弃
+          if (typeof val == 'string' && !(val = val.trim())) {
+            return;
+          }
+
+          // body += `&${key}=${(typeof val == 'object')
+          //   ? JSON.stringify(val)
+          //   : val}`;
+
+          body += `&${key}=${val}`;
+        });
+        body = body.substring(1);
+      }
+    } else {
+      body = data;
+    }
+
+    return this.request(path, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body,
+    });
+  };
 }
 
-export function platGet(url) {
-  return plat(url);
-}
+export const platService = new WrapService('http://localhost:8081/');
+
+export const shopService = new WrapService('http://localhost:8080/');

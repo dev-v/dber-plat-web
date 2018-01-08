@@ -38,7 +38,6 @@ export default class RowContentRoute extends PureComponent {
   render() {
     return (
       <RowContent
-        dict={this.dict}
         columns={this.columns}
         edit={this.save}
         del={this.del}

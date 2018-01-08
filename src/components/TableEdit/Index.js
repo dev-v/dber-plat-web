@@ -1,6 +1,6 @@
 import {Table, Input, message, Popconfirm} from 'antd';
 import CellType from './CellHelp';
-import {dictCache} from '../../utils/util';
+import CellDictRender from './CellDictRender';
 
 const msg = '同时只能编辑一行数据！';
 const _idKey = '_dber_key_';
@@ -14,7 +14,9 @@ function renderColumns(text, record, column) {
               onChange={(val) => {
                 record[column.dataIndex || column.key] = val;
               }}/>
-      : Cell.format(text, column)
+      : ((Cell == CellType.dictSelect)
+      ? <CellDictRender value={text} categoryId={column.categoryId}/>
+      : Cell.format(text, column))
   );
 }
 
@@ -126,14 +128,6 @@ export default class Index extends React.Component {
       });
       return column;
     } else {
-      if (column.editable === CellType.dictSelect) {
-        const {categoryId} = column;
-        dictCache.getDict(categoryId, (dict, remote) => {
-          if (remote) {
-            this.setState({...this.state});
-          }
-        });
-      }
       return {
         ...column,
         render: (text, record) => renderColumns(text,

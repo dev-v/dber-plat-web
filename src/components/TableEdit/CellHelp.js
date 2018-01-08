@@ -12,8 +12,19 @@ const CellType = {
 };
 
 const DictCategory = {
-  fitnessType: 1029,
-  yesNo: 1028,
+  fitnessType: 1,
+  yesNo: 2,
+  elementActive: 3,
+  msgType: 4,
+  imgType: 5,
+  imgStatus: 6,
+  system: 7,
+  jobTriggerType: 8,
+  jobTaskType: 9,
+  jobStatus: 10,
+  jobExecuteStatus: 11,
+  accountStatus: 12,
+  accountType: 13,
 };
 
 export {CellType, DictCategory};

@@ -17,6 +17,7 @@ export default class CellTime extends PureComponent {
     super(props);
     Object.assign(this.state, props);
     this.state.value = moment(props.value);
+    this.state.onChange(this.state.value);
   }
 
   setValue(time) {
