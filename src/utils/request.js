@@ -83,12 +83,12 @@ class WrapService {
           //   ? JSON.stringify(val)
           //   : val}`;
 
-          body += `&${key}=${val}`;
+          body += `&${key}=${encodeURI(val)}`;
         });
         body = body.substring(1);
       }
     } else {
-      body = data;
+      body = encodeURI(data);
     }
 
     return this.request(path, {

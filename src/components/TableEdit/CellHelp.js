@@ -25,6 +25,7 @@ const DictCategory = {
   jobExecuteStatus: 11,
   accountStatus: 12,
   accountType: 13,
+  shopStatus: 14,
 };
 
 export {CellType, DictCategory};

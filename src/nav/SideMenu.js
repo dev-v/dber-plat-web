@@ -25,6 +25,9 @@ export default class SideMenu extends PureComponent {
       return;
     }
     return menus.map((item) => {
+      if (item.visible == false) {
+        return;
+      }
       const path = `${parentPath}/${item.path}`;
       item.realPath = path;
       this.pathMap.set(path, item);
@@ -57,7 +60,7 @@ export default class SideMenu extends PureComponent {
     const items = [];
     let p = '';
     key.split('/').map((k) => {
-      if(k){
+      if (k) {
         p += '/' + k;
         items.push(this.pathMap.get(p));
       }
@@ -71,8 +74,10 @@ export default class SideMenu extends PureComponent {
 
   render() {
     const menuItems = this.getMenuItems(this.props.datas);
-    return (<Sider collapsible>
-      <div className="logo" />
+    return (<Sider collapsible
+                   collapsed={this.props.collapsed}>
+      <div className="logo">
+      </div>
       <Menu
         defaultSelectedKeys={this.defaultSelectedKeys} mode="inline"
         defaultOpenKeys={this.defaultSelectedParent}

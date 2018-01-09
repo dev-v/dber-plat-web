@@ -71,10 +71,10 @@ export default [
     icon: 'profile',
     children: [
       {
-        title: '健身项目',
-        path: 'fitness',
+        title: '店铺',
+        path: 'shop',
         selected: true,
-        models: () => [import('../models/fitness')],
-        component: () => import('../routes/Fitness'),
+        models: () => [import('../models/shop')],
+        component: () => import('../routes/Shop'),
       },],
   }];

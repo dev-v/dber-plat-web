@@ -1,17 +1,19 @@
 import dva from 'dva';
 import {message} from 'antd';
 import './index.css';
+import menu from './nav/menu';
+import {set} from './nav/Component';
+import createBrowserHistory from 'history/createBrowserHistory';
 
-const app = dva();
-
-app.use({
+const app = dva({
+  history: createBrowserHistory(),
   onError(e) {
     message.error(e.message);
     console.log(e);
   },
 });
 
-app.model(require('./models/contentSwitch'));
+set(app, menu);
 
 app.router(require('./router'));
 

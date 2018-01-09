@@ -1,22 +1,40 @@
-import {Layout, Menu} from 'antd';
+import {Layout, Menu, Icon} from 'antd';
 import React from 'react';
 import menus from './menu';
 import SideMenu from './SideMenu';
 import ContentSwitch from './ContentSwitch';
+import styles from './index.less';
 
 const {Header, Content, Footer} = Layout;
 
 class IndexPage extends React.Component {
+  state = {
+    collapsed: false,
+  };
+
+  toggle = () => {
+    this.setState({
+      collapsed: !this.state.collapsed,
+    });
+  };
+
   render() {
-    const menuClick = {app: this.props.app};
+    const menuClick = {};
     return (
       <Layout>
         <Layout style={{minHeight: '100vh'}}>
-          <SideMenu datas={menus} onClick={(item, items) => {
-            menuClick.changeComponent && menuClick.changeComponent(item, items);
-          }}/>
+          <SideMenu datas={menus} collapsed={this.state.collapsed}
+                    onClick={(item, items) => {
+                      menuClick.changeComponent &&
+                      menuClick.changeComponent(item, items);
+                    }}/>
           <Layout>
             <Header>
+              <Icon
+                className={styles.trigger}
+                type={this.state.collapsed ? 'menu-unfold' : 'menu-fold'}
+                onClick={this.toggle}
+              />
             </Header>
             <Content style={{background: '#fff', padding: '16px'}}>
               <ContentSwitch menuClick={menuClick}/>
