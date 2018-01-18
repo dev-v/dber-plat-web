@@ -32,4 +32,27 @@ class DictCache {
 
 const dictCache = new DictCache();
 
-export {dictCache};
+const isBlank = (val) => {
+  return val != 0 && (!val || (typeof val == 'string' && !(val = val.trim())));
+}
+
+const storage = (key, val) => {
+  const type = typeof val;
+  if (type != 'undefined') {
+    if (type == 'object') {
+      const old = window.localStorage.getItem(key);
+      if (old) {
+        val = Object.assign(JSON.parse(old), val);
+      }
+    }
+    window.localStorage.setItem(key, JSON.stringify(val));
+    return val;
+  }
+  return JSON.parse(window.localStorage.getItem(key));
+}
+
+const clearStorage = () => {
+  window.localStorage.clear();
+}
+
+export {dictCache, isBlank, storage, clearStorage};

@@ -1,11 +1,18 @@
 import fetch from 'dva/fetch';
-import nprogress from 'nprogress';
+import {nProgress} from './progress';
+import {isBlank, clearStorage} from './util';
 
 function checkSystemStatus(response) {
-  if (response.code == 200) {
+  // status为9999以下的系统异常，平台统一处理
+  const code = response.code;
+  if (code == 200 || code > 9999) {
     return response;
+  } else if (code == 600) {//请求登录
+    clearStorage();
+    location.pathname = '/user/login';
+  } else {
+    throw new Error(response.msg);
   }
-  throw new Error(response.msg);
 }
 
 function checkStatus(response) {
@@ -17,35 +24,14 @@ function checkStatus(response) {
   throw error;
 }
 
-class Progress {
-  n = 0;
-
-  inc() {
-    if (this.n < 1) {
-      this.n = 1;
-      nprogress.inc();
-    } else {
-      ++this.n;
-    }
-  }
-
-  done() {
-    --this.n;
-    if (this.n < 1) {
-      nprogress.done();
-    }
-  }
-}
-
-const progress = new Progress();
-
 export default function request(url, options) {
   console.log(url, options && options.body);
-  progress.inc();
-  return fetch(url, options).
-    then(checkStatus).
-    then(checkSystemStatus).finally(() => {
-      progress.done();
+  nProgress.inc();
+  return fetch(url, options)
+    .then(checkStatus)
+    .then(checkSystemStatus)
+    .finally(() => {
+      nProgress.done();
     });
 }
 
@@ -56,26 +42,37 @@ class WrapService {
     this.baseUrl = baseUrl;
   }
 
+  /**
+   * 同步请求
+   * @param path
+   * @param options
+   * @returns {*}
+   */
   request = (path, options) => {
-    return request(`${this.baseUrl}${path}`, options);
+    return request(`${this.baseUrl}${path}`,
+      //此处后续需研究 same-origin
+      {credentials: 'include', ...options});
   };
 
-  get = (path) => {
-    return this.request(path);
+  getUrl = (path) => {
+    return this.baseUrl + path;
+  }
+
+  get = async (path) => {
+    return await this.request(path);
   };
 
-  post = (path, data) => {
+  post = async (path, data) => {
     let body = '';
     if (typeof data == 'object') {
+      data = JSON.parse(JSON.stringify(data));
       let val;
       if (Array.isArray(data)) {
         body = JSON.stringify(data);
       } else {
         Object.keys(data).map((key) => {
           val = data[key];
-
-          // 空字符串舍弃
-          if (typeof val == 'string' && !(val = val.trim())) {
+          if (isBlank(val)) {
             return;
           }
 
@@ -91,7 +88,7 @@ class WrapService {
       body = encodeURI(data);
     }
 
-    return this.request(path, {
+    return await this.request(path, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -101,6 +98,10 @@ class WrapService {
   };
 }
 
-export const platService = new WrapService('http://localhost:8081/');
+const shopService = new WrapService('http://localhost:8080/');
 
-export const shopService = new WrapService('http://localhost:8080/');
+const platService = new WrapService('http://localhost:8081/');
+
+const loginService = shopService;
+
+export {loginService, shopService, platService};
