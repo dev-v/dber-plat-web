@@ -1,3 +1,3 @@
-import basePlat from './baseShop';
+import basePlat from './basePlat';
 
 export default basePlat('shop', 'shop');

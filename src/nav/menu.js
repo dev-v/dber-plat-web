@@ -7,6 +7,7 @@ export default [
       {
         title: '预约策略',
         path: 'booking',
+        selected: true,
         models: () => [import('../models/booking')],
         component: () => import('../routes/Booking'),
       },
@@ -73,8 +74,22 @@ export default [
       {
         title: '店铺',
         path: 'shop',
-        selected: true,
         models: () => [import('../models/shop')],
         component: () => import('../routes/Shop'),
+      },],
+  }, {
+    title: '登录管理',
+    path: 'user',
+    visible: false,
+    children: [
+      {
+        title: '登录',
+        path: 'login',
+        component: () => import('./User/Login'),
+      },
+      {
+        title: '注册',
+        path: 'register',
+        component: () => import('./User/Register'),
       },],
   }];

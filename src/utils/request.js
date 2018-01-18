@@ -98,10 +98,8 @@ class WrapService {
   };
 }
 
-const shopService = new WrapService('http://localhost:8080/');
-
 const platService = new WrapService('http://localhost:8081/');
 
-const loginService = shopService;
+const loginService = platService;
 
-export {loginService, shopService, platService};
+export {loginService, platService};
