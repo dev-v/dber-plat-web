@@ -21,7 +21,7 @@ const columns = [
   {
     title: '是否支持场地共享',
     dataIndex: 'shareSite',
-    categoryId: DictCategory.yesNo,
+    categoryId: DictCategory.fitnessShareSite,
     editable: CellHelp.dictSelect,
   },
   {
