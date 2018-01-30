@@ -24,22 +24,17 @@ const columns = [
   {
     title: '密码失效',
     dataIndex: 'pwExpired',
-  },
-  {
-    title: '账户类型',
-    dataIndex: 'type',
-    render: (val) => {
-      return <CellDictRender value={val}
-                             categoryId={DictCategory.accountType}/>;
-    },
+    render: val => <CellDictRender value={val} categoryId={DictCategory.yesNo}/>,
   },
   {
     title: '账户状态',
     dataIndex: 'status',
-    render: (val) => {
-      return <CellDictRender value={val}
-                             categoryId={DictCategory.accountStatus}/>;
-    },
+    render: val => <CellDictRender value={val} categoryId={DictCategory.accountStatus}/>,
+  },
+  {
+    title: '所属系统',
+    dataIndex: 'system',
+    render: val => <CellDictRender value={val} categoryId={DictCategory.system}/>,
   },
   {
     title: '更新时间',
