@@ -1,7 +1,28 @@
-export default (service,namespace, serviceRootPath, methodNameSuffix = '') => {
+/**
+ * 使用实例
+ */
+/*
+import basePlat from './basePlat';
+1、直接使用
+export default basePlat('fitness', 'fitness_service');
+
+2、定制
+const baseFitness = basePlat('fitness', 'fitness_service');
+export default {
+  ...baseFitness,
+  effects: {
+    ...baseFitness.effects,
+    // 下面可以是扩展或覆盖默认的effects
+  },
+};*/
+
+export default (service, namespace, serviceRootPath, methodNameSuffix = '') => {
   return {
     namespace,
     state: {},
+    service,
+    serviceRootPath,
+    methodNameSuffix,
     reducers: {},
     effects: {
       * [`query${methodNameSuffix}`]({page, condition}, {call}) {

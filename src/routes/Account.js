@@ -2,6 +2,7 @@ import {connect} from 'dva';
 import {PureComponent} from 'react';
 import RowContent from '../components/Content/RowContent';
 import {DictCategory} from '../components/TableEdit/CellHelp';
+import CellDictRender from '../components/TableEdit/CellDictRender';
 
 const columns = [
   {

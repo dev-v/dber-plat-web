@@ -1,8 +1,64 @@
-import MapLoader from './MapLoader';
-import {Spin, message} from 'antd';
+import {message, Spin} from 'antd';
 import React from 'react';
 import './Map.less';
 import mapPin from '../../assets/map-pin1.png';
+import scriptLoader from '../../utils/ScriptLoader';
+import {isSame} from "../../utils/util";
+
+const DEFAULT_MAP_CONFIG = {
+  v: '1.4.3',
+  hostAndPath: 'webapi.amap.com/maps',
+  key: '56ead169edd46d72e1dc0b2530f4be8f',
+  callback: '__amap_init_callback',
+  useAMapUI: true
+}
+
+let mainPromise = null
+let amapuiPromise = null
+let amapuiInited = false
+const locationDigit = 1000000;
+
+class MapLoader {
+  constructor({useAMapUI}) {
+    this.config = {...DEFAULT_MAP_CONFIG, useAMapUI}
+  }
+
+  getMainPromise() {
+    const cfg = this.config;
+    return scriptLoader.load(`//${cfg.hostAndPath}?v=${cfg.v}&key=${cfg.key}&callback=${cfg.callback}`, resolve => {
+      window[this.config.callback] = () => {
+        resolve();
+        delete window[this.config.callback]
+      }
+    })
+  }
+
+  loadMap() {
+    if (typeof window === 'undefined') {
+      return null
+    }
+    const {useAMapUI} = this.config
+    mainPromise = mainPromise || this.getMainPromise()
+    if (useAMapUI) {
+      amapuiPromise = amapuiPromise || scriptLoader.load('//webapi.amap.com/ui/1.0/main-async.js')
+    }
+    return new Promise(resolve => {
+      mainPromise.then(() => {
+        if (useAMapUI && amapuiPromise) {
+          amapuiPromise.then(() => {
+            if (window.initAMapUI && !amapuiInited) {
+              window.initAMapUI()
+              amapuiInited = true
+            }
+            resolve()
+          })
+        } else {
+          resolve()
+        }
+      })
+    })
+  }
+}
 
 const DEFAULT_CONFIG = {
   zoom: 18,
@@ -40,10 +96,9 @@ const plugins = {
   }
 };
 
-const geolocationMax = 2;//获取定位信息失败最大重试次数
+const geolocationMax = 1;//获取定位信息失败最大重试次数
 
-
-export default class Map extends React.PureComponent {
+export default class Map extends React.Component {
 
   /**
    * 获取城市信息 回到函数fn 参数为(status,result)
@@ -75,23 +130,37 @@ export default class Map extends React.PureComponent {
   }
 
   componentWillUnmount() {
-    this.map.destroy();
+    this.map && this.map.destroy();
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.setCenter(nextProps.location);
   }
 
   state = {
     geolocation: undefined,//用户当前位置 GeolocationResult对象
     position: undefined,//地图中心点位置信息 positionPickerResult对象
     bounds: undefined,//地图可视范围
+    location: [],//用户当前经纬度信息（已转换为整形）
     zoom: undefined,//当前可视级别
+  }
+
+  setCenter = (location) => {
+    if (location && !isSame(location, this.state.location)) {
+      this.map && this.map.setCenter(new AMap.LngLat(location[0] / locationDigit, location[1] / locationDigit));
+    }
   }
 
   constructor(props) {
     super(props);
-    Object.assign(this.events, props.events);
-    new MapLoader({useAMapUI: true}).load().then(() => {
+    const {events, location} = props;
+    Object.assign(this.events, events);
+    this.state.location = location;
+    new MapLoader({useAMapUI: true}).loadMap().then(() => {
       const map = this.map = new AMap.Map(this.container, DEFAULT_CONFIG);
       this.state.zoom = map.getZoom();
       AMap.event.addListener(map, 'zoomchange', this.zoomchange);
+      AMap.event.addListener(map, 'complete', this.loadComplete);
       // AMap.event.addListener(map, 'movestart', this.zoomchange);
       // AMap.event.addListener(map, 'moveend', this.zoomchange);
       // AMap.event.addListener(map, 'touchmove', this.zoomchange);
@@ -100,7 +169,12 @@ export default class Map extends React.PureComponent {
       // this.setBasicalController();
       this.setPositionPicker();
       this.mapLoaded = true;
+      this.setCenter(location);
     });
+  }
+
+  loadComplete = () => {
+    this.setCenter(this.props.location);
   }
 
   geolocationComplete = (result) => {
@@ -113,9 +187,12 @@ export default class Map extends React.PureComponent {
     this.state.bounds = this.map.getBounds();
   }
 
+
   positionPickerSuccess = (result) => {
+    const {lng, lat} = result.position;
     this.state.position = result;
     this.state.bounds = this.map.getBounds();
+    this.state.location = [lng * locationDigit, lat * locationDigit];
     this.events.positionChange({...this.state});
   }
 
@@ -145,7 +222,7 @@ export default class Map extends React.PureComponent {
       this.map.addControl(geolocation);
       AMap.event.addListener(geolocation, 'complete', this.geolocationComplete);
       AMap.event.addListener(geolocation, 'error', this.geolocationError);
-      geolocation.getCurrentPosition();
+      this.state.location || geolocation.getCurrentPosition();
     });
   }
 
